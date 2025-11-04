@@ -307,6 +307,7 @@
                         <param>com.graphhopper.*</param>
                     </targetTests>
                     <mutationThreshold>0</mutationThreshold> <!-- seuil 0 ici, car on va comparer avec précédent score du commit avant-->
+                    <testPlugin>junit5</testPlugin>
                 </configuration>
             </plugin>
         </plugins>
