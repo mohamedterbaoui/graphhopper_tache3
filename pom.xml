@@ -294,6 +294,21 @@
                     </execution>
                 </executions>
             </plugin>
+             <!-- Pitest mutation testing plugin -->
+            <plugin>
+                <groupId>org.pitest</groupId>
+                <artifactId>pitest-maven</artifactId>
+                <version>1.12.0</version>
+                <configuration>
+                    <targetClasses>
+                        <param>com.graphhopper.*</param>
+                    </targetClasses>
+                    <targetTests>
+                        <param>com.graphhopper.*</param>
+                    </targetTests>
+                    <mutationThreshold>0</mutationThreshold> <!-- seuil 0 ici, car on va comparer avec précédent score du commit avant-->
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
