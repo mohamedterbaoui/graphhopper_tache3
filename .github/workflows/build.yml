@@ -44,17 +44,17 @@ jobs:
       - name: Build ${{ matrix.java-version }}
         run: mvn -B clean test
 
-      - name: Run Pitest Mutation Testing
-        run: mvn org.pitest:pitest-maven:mutationCoverage
+      - name: Run Pitest Mutation Testing (core module only)
+        run: mvn org.pitest:pitest-maven:mutationCoverage -pl core
 
       - name: Extract Mutation Score
         id: mutation_score
         run: |
-          if [ -f target/pit-reports/*/index.html ]; then
-            SCORE=$(grep -oP '(?<=<div class="coverage_percentage">)\d+(?=%</div>)' target/pit-reports/*/index.html | head -1)
+          if [ -f core/target/pit-reports/*/index.html ]; then
+            SCORE=$(grep -oP '(?<=<div class="coverage_percentage">)\d+(?=%</div>)' core/target/pit-reports/*/index.html | head -1)
             if [ -z "$SCORE" ]; then
               # Fallback : essayer de trouver le score avec une autre méthode
-              SCORE=$(grep -oP 'Line Coverage: \K\d+' target/pit-reports/*/index.html | head -1)
+              SCORE=$(grep -oP 'Line Coverage: \K\d+' core/target/pit-reports/*/index.html | head -1)
             fi
             echo "score=$SCORE" >> $GITHUB_OUTPUT
             echo "📊 Mutation Score: $SCORE%"
