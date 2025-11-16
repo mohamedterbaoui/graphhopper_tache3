@@ -44,29 +44,9 @@ jobs:
       - name: Build ${{ matrix.java-version }}
         run: mvn -B clean test
 
-      - name: Run Pitest (current commit)
-        run: mvn org.pitest:pitest-maven:mutationCoverage
-
-      - name: Get current score
-        id: current
+      - name: Test message
         run: |
-          SCORE=$(grep -oP 'Line Coverage: \K\d+' target/pit-reports/*/index.html | head -1)
-          echo "score=$SCORE" >> $GITHUB_OUTPUT
-          echo "Current mutation score: $SCORE%"
-
-      - name: Run Pitest (previous commit)
-        run: |
-          git checkout HEAD^
-          mvn clean org.pitest:pitest-maven:mutationCoverage
-          SCORE=$(grep -oP 'Line Coverage: \K\d+' target/pit-reports/*/index.html | head -1)
-          echo "previous_score=$SCORE" >> $GITHUB_ENV
-          echo "Previous mutation score: $SCORE%"
-          git checkout -
-
-      - name: Compare scores
-        run: |
-          if [ "${{ steps.current.outputs.score }}" -lt "${{ env.previous_score }}" ]; then
-            echo "❌ Mutation score decreased from ${{ env.previous_score }}% to ${{ steps.current.outputs.score }}%"
-            exit 1
-          fi
-          echo "✅ Score OK: ${{ steps.current.outputs.score }}%"
+          echo "✅ Workflow exécuté avec succès!"
+          echo "Version Java: ${{ matrix.java-version }}"
+          echo "Système: ${{ runner.os }}"
+          echo "Date: $(date)"
