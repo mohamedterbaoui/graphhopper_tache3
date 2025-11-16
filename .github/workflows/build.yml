@@ -44,9 +44,28 @@ jobs:
       - name: Build ${{ matrix.java-version }}
         run: mvn -B clean test
 
-      - name: Test message
+      - name: Run Pitest Mutation Testing
+        run: mvn org.pitest:pitest-maven:mutationCoverage
+
+      - name: Extract Mutation Score
+        id: mutation_score
         run: |
-          echo "✅ Workflow exécuté avec succès!"
-          echo "Version Java: ${{ matrix.java-version }}"
-          echo "Système: ${{ runner.os }}"
-          echo "Date: $(date)"
+          if [ -f target/pit-reports/*/index.html ]; then
+            SCORE=$(grep -oP '(?<=<div class="coverage_percentage">)\d+(?=%</div>)' target/pit-reports/*/index.html | head -1)
+            if [ -z "$SCORE" ]; then
+              # Fallback : essayer de trouver le score avec une autre méthode
+              SCORE=$(grep -oP 'Line Coverage: \K\d+' target/pit-reports/*/index.html | head -1)
+            fi
+            echo "score=$SCORE" >> $GITHUB_OUTPUT
+            echo "📊 Mutation Score: $SCORE%"
+          else
+            echo "❌ Rapport Pitest introuvable"
+            exit 1
+          fi
+
+      - name: Display Results
+        run: |
+          echo "✅ Tests de mutation terminés!"
+          echo "📊 Score de mutation: ${{ steps.mutation_score.outputs.score }}%"
+          echo "🔧 Version Java: ${{ matrix.java-version }}"
+          echo "💻 Système: ${{ runner.os }}"
