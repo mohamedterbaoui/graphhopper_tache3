@@ -42,11 +42,11 @@ jobs:
             ${{ runner.os}}-node_modules-
 
       - name: Build ${{ matrix.java-version }}
-        run: mvn -B clean test
+        run: mvn -B clean install -DskipTests
 
       - name: Run Pitest Mutation Testing (core module only)
         timeout-minutes: 60
-        run: mvn org.pitest:pitest-maven:mutationCoverage -pl core -DskipTests=false
+        run: mvn org.pitest:pitest-maven:mutationCoverage -pl core -am
 
       - name: Extract Mutation Score
         id: mutation_score
