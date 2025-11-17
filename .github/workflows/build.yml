@@ -147,7 +147,11 @@ jobs:
             if [ $DIFF -gt 0 ]; then
               echo "✅ Improvement: +$DIFF%"
             elif [ $DIFF -lt 0 ]; then
-              echo "⚠️  Regression: $DIFF%"
+              echo "❌ Regression: $DIFF%"
+              echo "======================================"
+              echo ""
+              echo "::error::Mutation score decreased from $PREVIOUS% to $CURRENT% (-$((DIFF * -1))%)"
+              exit 1
             else
               echo "➡️  No change"
             fi

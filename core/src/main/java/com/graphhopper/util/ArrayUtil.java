@@ -30,6 +30,20 @@ import java.util.Random;
 
 public class ArrayUtil {
 
+
+    // added method for mutation testing
+    public int multiply(int a, int b) {
+        if (a == 0 || b == 0) {
+            return 0;
+        }
+        return a * b;
+    }
+
+    public static boolean isEven(int number) {
+    return number % 2 == 0;
+    }
+
+
     /**
      * Creates an IntArrayList of a given size where each element is set to the given value
      */
@@ -39,6 +53,7 @@ public class ArrayUtil {
         result.elementsCount = size;
         return result;
     }
+
 
     /**
      * Creates an IntArrayList filled with zeros
