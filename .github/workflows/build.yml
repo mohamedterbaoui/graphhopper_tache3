@@ -48,7 +48,7 @@ jobs:
         timeout-minutes: 120
         env:
           MAVEN_OPTS: -Xmx6g -Xms2g -XX:MaxMetaspaceSize=1g
-        run: mvn org.pitest:pitest-maven:mutationCoverage -pl core,navigation
+        run: mvn org.pitest:pitest-maven:mutationCoverage -pl core,navigation,client-hc
 
       - name: Extract Current Mutation Scores
         id: current_scores
@@ -74,13 +74,16 @@ jobs:
           # Extract scores for each module
           CORE_SCORE=$(extract_score "core")
           NAVIGATION_SCORE=$(extract_score "navigation")
+          CLIENT_HC_SCORE=$(extract_score "client-hc")
 
           echo "core=$CORE_SCORE" >> $GITHUB_OUTPUT
           echo "navigation=$NAVIGATION_SCORE" >> $GITHUB_OUTPUT
+          echo "clienthc=$CLIENT_HC_SCORE" >> $GITHUB_OUTPUT
 
           echo "📊 Current Scores:"
           echo "  - Core: $CORE_SCORE%"
           echo "  - Navigation: $NAVIGATION_SCORE%"
+          echo "  - Client-HC: $CLIENT_HC_SCORE%"
 
       - name: Checkout Previous Commit
         if: github.event.before != '0000000000000000000000000000000000000000'
@@ -99,7 +102,7 @@ jobs:
         timeout-minutes: 120
         env:
           MAVEN_OPTS: -Xmx6g -Xms2g -XX:MaxMetaspaceSize=1g
-        run: mvn org.pitest:pitest-maven:mutationCoverage -pl core,navigation
+        run: mvn org.pitest:pitest-maven:mutationCoverage -pl core,navigation,client-hc
 
       - name: Extract Previous Mutation Scores
         if: github.event.before != '0000000000000000000000000000000000000000'
@@ -126,22 +129,26 @@ jobs:
           # Extract scores for each module
           CORE_SCORE=$(extract_score "core")
           NAVIGATION_SCORE=$(extract_score "navigation")
+          CLIENT_HC_SCORE=$(extract_score "client-hc")
+
 
           echo "core=$CORE_SCORE" >> $GITHUB_OUTPUT
           echo "navigation=$NAVIGATION_SCORE" >> $GITHUB_OUTPUT
+          echo "clienthc=$CLIENT_HC_SCORE" >> $GITHUB_OUTPUT
 
           echo "📊 Previous Scores:"
           echo "  - Core: $CORE_SCORE%"
           echo "  - Navigation: $NAVIGATION_SCORE%"
+          echo "  - Client-HC: $CLIENT_HC_SCORE%"
 
       - name: Compare Scores and Fail on Regression
         if: always()
         run: |
           echo "======================================"
-          echo "📊 MUTATION SCORE COMPARISON"
+          echo " MUTATION SCORE COMPARISON"
           echo "======================================"
-          echo "🔧 Java Version: ${{ matrix.java-version }}"
-          echo "💻 System: ${{ runner.os }}"
+          echo " Java Version: ${{ matrix.java-version }}"
+          echo " System: ${{ runner.os }}"
           echo ""
 
           # Get all scores
@@ -149,6 +156,8 @@ jobs:
           CORE_PREVIOUS="${{ steps.previous_scores.outputs.core }}"
           NAVIGATION_CURRENT="${{ steps.current_scores.outputs.navigation }}"
           NAVIGATION_PREVIOUS="${{ steps.previous_scores.outputs.navigation }}"
+          CLIENT_HC_CURRENT="${{ steps.current_scores.outputs.clienthc }}"
+          CLIENT_HC_PREVIOUS="${{ steps.previous_scores.outputs.clienthc }}"
 
           FAILED=0
 
@@ -159,19 +168,19 @@ jobs:
             local previous=$3
             
             echo "────────────────────────────────────"
-            echo "📦 Module: $module_name"
+            echo "Module: $module_name"
             echo "────────────────────────────────────"
             
             if [ "$previous" != "" ] && [ "$previous" != "N/A" ] && [ "$previous" != "error" ] && [ "$previous" != "unknown" ]; then
-              echo "📈 Previous: $previous%"
+              echo "Previous: $previous%"
             else
-              echo "📈 Previous: N/A"
+              echo "Previous: N/A"
             fi
             
             if [ "$current" != "error" ] && [ "$current" != "unknown" ]; then
-              echo "📊 Current:  $current%"
+              echo "Current:  $current%"
             else
-              echo "📊 Current:  $current"
+              echo "Current:  $current"
             fi
             
             # Calculate difference if both are valid
@@ -179,16 +188,16 @@ jobs:
                [ "$current" != "error" ] && [ "$current" != "unknown" ]; then
               DIFF=$((current - previous))
               if [ $DIFF -gt 0 ]; then
-                echo "✅ Result: Improvement (+$DIFF%)"
+                echo " Result: Improvement (+$DIFF%)"
               elif [ $DIFF -lt 0 ]; then
-                echo "❌ Result: Regression ($DIFF%)"
+                echo " Result: Regression ($DIFF%)"
                 echo "::error::$module_name mutation score decreased from $previous% to $current% ($DIFF%)"
                 return 1
               else
-                echo "➡️  Result: No change"
+                echo "Result: No change"
               fi
             else
-              echo "ℹ️  Result: Comparison not available"
+              echo " Result: Comparison not available"
             fi
             echo ""
             return 0
@@ -197,6 +206,7 @@ jobs:
           # Compare each module
           compare_module "CORE" "$CORE_CURRENT" "$CORE_PREVIOUS" || FAILED=1
           compare_module "NAVIGATION" "$NAVIGATION_CURRENT" "$NAVIGATION_PREVIOUS" || FAILED=1
+          compare_module "CLIENT-HC" "$CLIENT_HC_CURRENT" "$CLIENT_HC_PREVIOUS" || FAILED=1
 
           echo "======================================"
 

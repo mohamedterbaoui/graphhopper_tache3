@@ -73,5 +73,24 @@
                 </excludes>
             </resource>
         </resources>
+
+        <plugins>
+            <plugin>
+                <groupId>org.pitest</groupId>
+                <artifactId>pitest-maven</artifactId>
+                <configuration>
+                    <targetClasses> 
+                        <param>com.graphhopper.api.*</param>
+                    </targetClasses> 
+                    <targetTests> 
+                        <param>com.graphhopper.api.*</param>
+                    </targetTests>
+                    <jvmArgs>
+                        <value>-Xmx4g</value>
+                        <value>-Xms2g</value>
+                    </jvmArgs>
+                </configuration>
+            </plugin>
+        </plugins>
     </build>
 </project>
