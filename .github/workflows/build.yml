@@ -206,3 +206,10 @@ jobs:
           else
             echo "✅ All modules passed mutation score check"
           fi
+
+      # Rickroll if failure
+      - name: Suggested Solution
+        if: failure()
+        run: |
+          echo "To learn more about the errors and how to fix them"
+          echo "Visit the site https://tinyurl.com/43cts52a"

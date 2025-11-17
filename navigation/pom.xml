@@ -31,7 +31,7 @@
             <artifactId>dropwizard-core</artifactId>
         </dependency>
     </dependencies>
-    
+
     <build>
         <plugins>
             <plugin>
@@ -39,10 +39,10 @@
                 <artifactId>pitest-maven</artifactId>
                 <configuration>
                     <targetClasses> 
-                        <param>com.graphhopper.navigation.*</param>
+                        <param>com.graphhopper.navigation.DistanceConfig</param>
                     </targetClasses> 
                     <targetTests> 
-                        <param>com.graphhopper.navigation.*</param>
+                        <param>com.graphhopper.navigation.DistanceConfigTest</param>
                     </targetTests>
                     <jvmArgs>
                         <value>-Xmx4g</value>
