@@ -44,32 +44,43 @@ jobs:
       - name: Build ${{ matrix.java-version }}
         run: mvn -B clean install -DskipTests
 
-      - name: Run Pitest Mutation Testing (Current Commit)
+      - name: Run Pitest Mutation Testing (Current Commit - All Modules)
         timeout-minutes: 120
         env:
           MAVEN_OPTS: -Xmx6g -Xms2g -XX:MaxMetaspaceSize=1g
-        run: mvn org.pitest:pitest-maven:mutationCoverage -pl core -am
+        run: mvn org.pitest:pitest-maven:mutationCoverage -pl core,navigation
 
-      - name: Extract Current Mutation Score
-        id: current_score
+      - name: Extract Current Mutation Scores
+        id: current_scores
         continue-on-error: true
         run: |
-          REPORT_DIR=$(find core/target/pit-reports -type d -mindepth 1 -maxdepth 1 | head -1)
-          if [ -n "$REPORT_DIR" ] && [ -f "$REPORT_DIR/index.html" ]; then
-            echo "Found report directory: $REPORT_DIR"
-            SCORE=$(grep -A 10 "Mutation Coverage" "$REPORT_DIR/index.html" | grep -oP '(?<=<td>)\d+(?=% <div class="coverage_bar")' | sed -n '2p')
+          # Function to extract score from a module
+          extract_score() {
+            local module=$1
+            local REPORT_DIR=$(find $module/target/pit-reports -type d -mindepth 1 -maxdepth 1 2>/dev/null | head -1)
             
-            if [ -n "$SCORE" ]; then
-              echo "score=$SCORE" >> $GITHUB_OUTPUT
-              echo "📊 Current Mutation Score: $SCORE%"
+            if [ -n "$REPORT_DIR" ] && [ -f "$REPORT_DIR/index.html" ]; then
+              local SCORE=$(grep -A 10 "Mutation Coverage" "$REPORT_DIR/index.html" | grep -oP '(?<=<td>)\d+(?=% <div class="coverage_bar")' | sed -n '2p')
+              if [ -n "$SCORE" ]; then
+                echo "$SCORE"
+              else
+                echo "unknown"
+              fi
             else
-              echo "⚠️ Could not extract mutation score from index.html"
-              echo "score=unknown" >> $GITHUB_OUTPUT
+              echo "error"
             fi
-          else
-            echo "❌ Pitest report not found"
-            echo "score=error" >> $GITHUB_OUTPUT
-          fi
+          }
+
+          # Extract scores for each module
+          CORE_SCORE=$(extract_score "core")
+          NAVIGATION_SCORE=$(extract_score "navigation")
+
+          echo "core=$CORE_SCORE" >> $GITHUB_OUTPUT
+          echo "navigation=$NAVIGATION_SCORE" >> $GITHUB_OUTPUT
+
+          echo "📊 Current Scores:"
+          echo "  - Core: $CORE_SCORE%"
+          echo "  - Navigation: $NAVIGATION_SCORE%"
 
       - name: Checkout Previous Commit
         if: github.event.before != '0000000000000000000000000000000000000000'
@@ -82,79 +93,116 @@ jobs:
         continue-on-error: true
         run: mvn -B clean install -DskipTests
 
-      - name: Run Pitest Mutation Testing (Previous Commit)
+      - name: Run Pitest Mutation Testing (Previous Commit - All Modules)
         if: github.event.before != '0000000000000000000000000000000000000000'
         continue-on-error: true
         timeout-minutes: 120
         env:
           MAVEN_OPTS: -Xmx6g -Xms2g -XX:MaxMetaspaceSize=1g
-        run: mvn org.pitest:pitest-maven:mutationCoverage -pl core -am
+        run: mvn org.pitest:pitest-maven:mutationCoverage -pl core,navigation
 
-      - name: Extract Previous Mutation Score
+      - name: Extract Previous Mutation Scores
         if: github.event.before != '0000000000000000000000000000000000000000'
-        id: previous_score
+        id: previous_scores
         continue-on-error: true
         run: |
-          REPORT_DIR=$(find core/target/pit-reports -type d -mindepth 1 -maxdepth 1 | head -1)
-          if [ -n "$REPORT_DIR" ] && [ -f "$REPORT_DIR/index.html" ]; then
-            echo "Found report directory: $REPORT_DIR"
-            SCORE=$(grep -A 10 "Mutation Coverage" "$REPORT_DIR/index.html" | grep -oP '(?<=<td>)\d+(?=% <div class="coverage_bar")' | sed -n '2p')
+          # Function to extract score from a module
+          extract_score() {
+            local module=$1
+            local REPORT_DIR=$(find $module/target/pit-reports -type d -mindepth 1 -maxdepth 1 2>/dev/null | head -1)
             
-            if [ -n "$SCORE" ]; then
-              echo "score=$SCORE" >> $GITHUB_OUTPUT
-              echo "📊 Previous Mutation Score: $SCORE%"
+            if [ -n "$REPORT_DIR" ] && [ -f "$REPORT_DIR/index.html" ]; then
+              local SCORE=$(grep -A 10 "Mutation Coverage" "$REPORT_DIR/index.html" | grep -oP '(?<=<td>)\d+(?=% <div class="coverage_bar")' | sed -n '2p')
+              if [ -n "$SCORE" ]; then
+                echo "$SCORE"
+              else
+                echo "N/A"
+              fi
             else
-              echo "⚠️ Could not extract mutation score from index.html"
-              echo "score=N/A" >> $GITHUB_OUTPUT
+              echo "N/A"
             fi
-          else
-            echo "❌ Pitest report not found"
-            echo "score=N/A" >> $GITHUB_OUTPUT
-          fi
+          }
 
-      - name: Display Mutation Score Comparison
+          # Extract scores for each module
+          CORE_SCORE=$(extract_score "core")
+          NAVIGATION_SCORE=$(extract_score "navigation")
+
+          echo "core=$CORE_SCORE" >> $GITHUB_OUTPUT
+          echo "navigation=$NAVIGATION_SCORE" >> $GITHUB_OUTPUT
+
+          echo "📊 Previous Scores:"
+          echo "  - Core: $CORE_SCORE%"
+          echo "  - Navigation: $NAVIGATION_SCORE%"
+
+      - name: Compare Scores and Fail on Regression
         if: always()
         run: |
           echo "======================================"
           echo "📊 MUTATION SCORE COMPARISON"
           echo "======================================"
-
-          CURRENT="${{ steps.current_score.outputs.score }}"
-          PREVIOUS="${{ steps.previous_score.outputs.score }}"
-
           echo "🔧 Java Version: ${{ matrix.java-version }}"
           echo "💻 System: ${{ runner.os }}"
           echo ""
 
-          if [ "$PREVIOUS" != "" ] && [ "$PREVIOUS" != "N/A" ] && [ "$PREVIOUS" != "error" ] && [ "$PREVIOUS" != "unknown" ]; then
-            echo "📈 Previous Commit: $PREVIOUS%"
-          else
-            echo "📈 Previous Commit: N/A (first commit or extraction failed)"
-          fi
+          # Get all scores
+          CORE_CURRENT="${{ steps.current_scores.outputs.core }}"
+          CORE_PREVIOUS="${{ steps.previous_scores.outputs.core }}"
+          NAVIGATION_CURRENT="${{ steps.current_scores.outputs.navigation }}"
+          NAVIGATION_PREVIOUS="${{ steps.previous_scores.outputs.navigation }}"
 
-          if [ "$CURRENT" != "error" ] && [ "$CURRENT" != "unknown" ]; then
-            echo "📊 Current Commit:  $CURRENT%"
-          else
-            echo "📊 Current Commit:  $CURRENT (extraction failed)"
-          fi
+          FAILED=0
 
-          echo ""
-
-          # Calculate difference if both scores are valid
-          if [ "$PREVIOUS" != "" ] && [ "$PREVIOUS" != "N/A" ] && [ "$PREVIOUS" != "error" ] && [ "$PREVIOUS" != "unknown" ] && \
-             [ "$CURRENT" != "error" ] && [ "$CURRENT" != "unknown" ]; then
-            DIFF=$((CURRENT - PREVIOUS))
-            if [ $DIFF -gt 0 ]; then
-              echo "✅ Improvement: +$DIFF%"
-            elif [ $DIFF -lt 0 ]; then
-              echo "❌ Regression: $DIFF%"
-              echo "======================================"
-              echo ""
-              echo "::error::Mutation score decreased from $PREVIOUS% to $CURRENT% (-$((DIFF * -1))%)"
-              exit 1
+          # Function to compare scores
+          compare_module() {
+            local module_name=$1
+            local current=$2
+            local previous=$3
+            
+            echo "────────────────────────────────────"
+            echo "📦 Module: $module_name"
+            echo "────────────────────────────────────"
+            
+            if [ "$previous" != "" ] && [ "$previous" != "N/A" ] && [ "$previous" != "error" ] && [ "$previous" != "unknown" ]; then
+              echo "📈 Previous: $previous%"
             else
-              echo "➡️  No change"
+              echo "📈 Previous: N/A"
             fi
-          fi
+            
+            if [ "$current" != "error" ] && [ "$current" != "unknown" ]; then
+              echo "📊 Current:  $current%"
+            else
+              echo "📊 Current:  $current"
+            fi
+            
+            # Calculate difference if both are valid
+            if [ "$previous" != "" ] && [ "$previous" != "N/A" ] && [ "$previous" != "error" ] && [ "$previous" != "unknown" ] && \
+               [ "$current" != "error" ] && [ "$current" != "unknown" ]; then
+              DIFF=$((current - previous))
+              if [ $DIFF -gt 0 ]; then
+                echo "✅ Result: Improvement (+$DIFF%)"
+              elif [ $DIFF -lt 0 ]; then
+                echo "❌ Result: Regression ($DIFF%)"
+                echo "::error::$module_name mutation score decreased from $previous% to $current% ($DIFF%)"
+                return 1
+              else
+                echo "➡️  Result: No change"
+              fi
+            else
+              echo "ℹ️  Result: Comparison not available"
+            fi
+            echo ""
+            return 0
+          }
+
+          # Compare each module
+          compare_module "CORE" "$CORE_CURRENT" "$CORE_PREVIOUS" || FAILED=1
+          compare_module "NAVIGATION" "$NAVIGATION_CURRENT" "$NAVIGATION_PREVIOUS" || FAILED=1
 
           echo "======================================"
+
+          if [ $FAILED -eq 1 ]; then
+            echo "❌ BUILD FAILED: One or more modules had mutation score regression"
+            exit 1
+          else
+            echo "✅ All modules passed mutation score check"
+          fi
