@@ -57,19 +57,16 @@ jobs:
           REPORT_DIR=$(find core/target/pit-reports -type d -mindepth 1 -maxdepth 1 | head -1)
           if [ -n "$REPORT_DIR" ] && [ -f "$REPORT_DIR/index.html" ]; then
             echo "Found report directory: $REPORT_DIR"
-            # Extract mutation score - note the \s* to handle whitespace
-            SCORE=$(grep -oP '(?<=<div class="coverage_percentage">)\d+(?=%\s*</div>)' "$REPORT_DIR/index.html" | sed -n '2p')
             
-            if [ -z "$SCORE" ]; then
-              # Try alternative pattern without strict whitespace
-              SCORE=$(grep "coverage_percentage" "$REPORT_DIR/index.html" | grep -oP '\d+(?=%)' | sed -n '2p')
-            fi
+            # Extract mutation coverage from the Project Summary table
+            # It's in the second row, third column after "Line Coverage"
+            SCORE=$(grep -A 10 "Mutation Coverage" "$REPORT_DIR/index.html" | grep -oP '(?<=<td>)\d+(?=% <div class="coverage_bar")' | head -1)
             
             if [ -n "$SCORE" ]; then
               echo "score=$SCORE" >> $GITHUB_OUTPUT
               echo "📊 Mutation Score: $SCORE%"
             else
-              echo "⚠️ Could not extract mutation score, but report exists"
+              echo "⚠️ Could not extract mutation score from index.html"
               echo "score=unknown" >> $GITHUB_OUTPUT
             fi
           else
