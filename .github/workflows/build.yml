@@ -59,8 +59,8 @@ jobs:
             echo "Found report directory: $REPORT_DIR"
             
             # Extract mutation coverage from the Project Summary table
-            # It's in the second row, third column after "Line Coverage"
-            SCORE=$(grep -A 10 "Mutation Coverage" "$REPORT_DIR/index.html" | grep -oP '(?<=<td>)\d+(?=% <div class="coverage_bar")' | head -1)
+            # It's the 3rd column in the data row (after Line Coverage)
+            SCORE=$(grep -A 10 "Mutation Coverage" "$REPORT_DIR/index.html" | grep -oP '(?<=<td>)\d+(?=% <div class="coverage_bar")' | sed -n '2p')
             
             if [ -n "$SCORE" ]; then
               echo "score=$SCORE" >> $GITHUB_OUTPUT
