@@ -31,17 +31,17 @@ import java.util.Random;
 public class ArrayUtil {
 
 
-    // added method for mutation testing
-    public int multiply(int a, int b) {
-        if (a == 0 || b == 0) {
-            return 0;
-        }
-        return a * b;
-    }
+    // // added method for mutation testing
+    // public int multiply(int a, int b) {
+    //     if (a == 0 || b == 0) {
+    //         return 0;
+    //     }
+    //     return a * b;
+    // }
 
-    public static boolean isEven(int number) {
-    return number % 2 == 0;
-    }
+    // public static boolean isEven(int number) {
+    // return number % 2 == 0;
+    // }
 
 
     /**
