@@ -295,7 +295,6 @@
                 </executions>
             </plugin>
              <!-- Pitest mutation testing plugin -->
-<!-- Pitest mutation testing plugin -->
             <plugin>
                 <groupId>org.pitest</groupId>
                 <artifactId>pitest-maven</artifactId>

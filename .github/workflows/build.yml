@@ -45,7 +45,9 @@ jobs:
         run: mvn -B clean install -DskipTests
 
       - name: Run Pitest Mutation Testing (core module only)
-        timeout-minutes: 60
+        timeout-minutes: 120
+        env:
+          MAVEN_OPTS: -Xmx6g -Xms2g -XX:MaxMetaspaceSize=1g
         run: mvn org.pitest:pitest-maven:mutationCoverage -pl core -am
 
       - name: Extract Mutation Score
@@ -55,23 +57,14 @@ jobs:
           REPORT_DIR=$(find core/target/pit-reports -type d -mindepth 1 -maxdepth 1 | head -1)
           if [ -n "$REPORT_DIR" ] && [ -f "$REPORT_DIR/index.html" ]; then
             echo "Found report directory: $REPORT_DIR"
-            # Try multiple methods to extract the mutation score
-            SCORE=$(grep -oP '(?<=<div class="coverage_percentage">)\d+(?=%</div>)' "$REPORT_DIR/index.html" | head -1)
+            # Extract mutation score - note the \s* to handle whitespace
+            SCORE=$(grep -oP '(?<=<div class="coverage_percentage">)\d+(?=%\s*</div>)' "$REPORT_DIR/index.html" | sed -n '2p')
+            
             if [ -z "$SCORE" ]; then
-              # Try to find mutation score in the summary table
-              SCORE=$(grep -oP '(?<=<td class="coverage_percentage">)\d+(?=%</td>)' "$REPORT_DIR/index.html" | head -1)
+              # Try alternative pattern without strict whitespace
+              SCORE=$(grep "coverage_percentage" "$REPORT_DIR/index.html" | grep -oP '\d+(?=%)' | sed -n '2p')
             fi
-            if [ -z "$SCORE" ]; then
-              # Try to extract from XML report
-              XML_REPORT=$(find "$REPORT_DIR" -name "mutations.xml" | head -1)
-              if [ -n "$XML_REPORT" ]; then
-                SCORE=$(grep -oP '(?<=<mutationScore>)[0-9.]+(?=</mutationScore>)' "$XML_REPORT" | head -1 | cut -d. -f1)
-              fi
-            fi
-            if [ -z "$SCORE" ]; then
-              # Last resort: try to find any percentage in the HTML
-              SCORE=$(grep -oP '\d+(?=%.*mutation)' "$REPORT_DIR/index.html" | head -1)
-            fi
+            
             if [ -n "$SCORE" ]; then
               echo "score=$SCORE" >> $GITHUB_OUTPUT
               echo "📊 Mutation Score: $SCORE%"
