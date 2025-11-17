@@ -192,23 +192,25 @@
                 <artifactId>pitest-maven</artifactId>
                 <version>1.21.0</version>
                 <configuration>
-                    <targetClasses>
-                        <param>com.graphhopper.*</param>
-                    </targetClasses>
-                    <targetTests>
-                        <param>com.graphhopper.*</param>
+                    <targetClasses> 
+                        <param>com.graphhopper.util.GHUtility</param> 
+                        <param>com.graphhopper.util.ArrayUtil</param> 
+                    </targetClasses> 
+                    <targetTests> 
+                        <param>com.graphhopper.util.GHUtilityTest</param> 
+                        <param>com.graphhopper.util.ArrayUtilTest</param> 
                     </targetTests>
-                    <mutexClasses>
-                        <param>java.util.concurrent.*</param>
-                    </mutexClasses>
                     <outputFormats>
                         <outputFormat>HTML</outputFormat>
                         <outputFormat>XML</outputFormat>
                     </outputFormats>
                     <junitTestPlugin>junit5</junitTestPlugin>
                     <threads>4</threads>
-                    <timeoutConstant>10000</timeoutConstant>
-                    <timeoutFactor>1.25</timeoutFactor>
+                    <jvmArgs>
+                        <value>-Xmx4g</value>
+                        <value>-Xms2g</value>
+                    </jvmArgs>
+                    <verbose>true</verbose>
                 </configuration>
                 <dependencies>
                     <dependency>
