@@ -44,45 +44,113 @@ jobs:
       - name: Build ${{ matrix.java-version }}
         run: mvn -B clean install -DskipTests
 
-      - name: Run Pitest Mutation Testing (core module only)
+      - name: Run Pitest Mutation Testing (Current Commit)
         timeout-minutes: 120
         env:
           MAVEN_OPTS: -Xmx6g -Xms2g -XX:MaxMetaspaceSize=1g
         run: mvn org.pitest:pitest-maven:mutationCoverage -pl core -am
 
-      - name: Extract Mutation Score
-        id: mutation_score
+      - name: Extract Current Mutation Score
+        id: current_score
         continue-on-error: true
         run: |
           REPORT_DIR=$(find core/target/pit-reports -type d -mindepth 1 -maxdepth 1 | head -1)
           if [ -n "$REPORT_DIR" ] && [ -f "$REPORT_DIR/index.html" ]; then
             echo "Found report directory: $REPORT_DIR"
-            
-            # Extract mutation coverage from the Project Summary table
-            # It's the 3rd column in the data row (after Line Coverage)
             SCORE=$(grep -A 10 "Mutation Coverage" "$REPORT_DIR/index.html" | grep -oP '(?<=<td>)\d+(?=% <div class="coverage_bar")' | sed -n '2p')
             
             if [ -n "$SCORE" ]; then
               echo "score=$SCORE" >> $GITHUB_OUTPUT
-              echo "📊 Mutation Score: $SCORE%"
+              echo "📊 Current Mutation Score: $SCORE%"
             else
               echo "⚠️ Could not extract mutation score from index.html"
               echo "score=unknown" >> $GITHUB_OUTPUT
             fi
           else
-            echo "❌ Pitest report not found in core/target/pit-reports/"
+            echo "❌ Pitest report not found"
             echo "score=error" >> $GITHUB_OUTPUT
           fi
 
-      - name: Display Results
+      - name: Checkout Previous Commit
+        if: github.event.before != '0000000000000000000000000000000000000000'
+        continue-on-error: true
+        run: |
+          git checkout ${{ github.event.before }}
+
+      - name: Build Previous Commit
+        if: github.event.before != '0000000000000000000000000000000000000000'
+        continue-on-error: true
+        run: mvn -B clean install -DskipTests
+
+      - name: Run Pitest Mutation Testing (Previous Commit)
+        if: github.event.before != '0000000000000000000000000000000000000000'
+        continue-on-error: true
+        timeout-minutes: 120
+        env:
+          MAVEN_OPTS: -Xmx6g -Xms2g -XX:MaxMetaspaceSize=1g
+        run: mvn org.pitest:pitest-maven:mutationCoverage -pl core -am
+
+      - name: Extract Previous Mutation Score
+        if: github.event.before != '0000000000000000000000000000000000000000'
+        id: previous_score
+        continue-on-error: true
+        run: |
+          REPORT_DIR=$(find core/target/pit-reports -type d -mindepth 1 -maxdepth 1 | head -1)
+          if [ -n "$REPORT_DIR" ] && [ -f "$REPORT_DIR/index.html" ]; then
+            echo "Found report directory: $REPORT_DIR"
+            SCORE=$(grep -A 10 "Mutation Coverage" "$REPORT_DIR/index.html" | grep -oP '(?<=<td>)\d+(?=% <div class="coverage_bar")' | sed -n '2p')
+            
+            if [ -n "$SCORE" ]; then
+              echo "score=$SCORE" >> $GITHUB_OUTPUT
+              echo "📊 Previous Mutation Score: $SCORE%"
+            else
+              echo "⚠️ Could not extract mutation score from index.html"
+              echo "score=N/A" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "❌ Pitest report not found"
+            echo "score=N/A" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Display Mutation Score Comparison
         if: always()
         run: |
-          echo "✅ Mutation testing completed!"
-          SCORE="${{ steps.mutation_score.outputs.score }}"
-          if [ "$SCORE" != "error" ] && [ "$SCORE" != "unknown" ]; then
-            echo "📊 Mutation Score: $SCORE%"
-          else
-            echo "⚠️ Mutation Score: $SCORE (could not be extracted)"
-          fi
+          echo "======================================"
+          echo "📊 MUTATION SCORE COMPARISON"
+          echo "======================================"
+
+          CURRENT="${{ steps.current_score.outputs.score }}"
+          PREVIOUS="${{ steps.previous_score.outputs.score }}"
+
           echo "🔧 Java Version: ${{ matrix.java-version }}"
           echo "💻 System: ${{ runner.os }}"
+          echo ""
+
+          if [ "$PREVIOUS" != "" ] && [ "$PREVIOUS" != "N/A" ] && [ "$PREVIOUS" != "error" ] && [ "$PREVIOUS" != "unknown" ]; then
+            echo "📈 Previous Commit: $PREVIOUS%"
+          else
+            echo "📈 Previous Commit: N/A (first commit or extraction failed)"
+          fi
+
+          if [ "$CURRENT" != "error" ] && [ "$CURRENT" != "unknown" ]; then
+            echo "📊 Current Commit:  $CURRENT%"
+          else
+            echo "📊 Current Commit:  $CURRENT (extraction failed)"
+          fi
+
+          echo ""
+
+          # Calculate difference if both scores are valid
+          if [ "$PREVIOUS" != "" ] && [ "$PREVIOUS" != "N/A" ] && [ "$PREVIOUS" != "error" ] && [ "$PREVIOUS" != "unknown" ] && \
+             [ "$CURRENT" != "error" ] && [ "$CURRENT" != "unknown" ]; then
+            DIFF=$((CURRENT - PREVIOUS))
+            if [ $DIFF -gt 0 ]; then
+              echo "✅ Improvement: +$DIFF%"
+            elif [ $DIFF -lt 0 ]; then
+              echo "⚠️  Regression: $DIFF%"
+            else
+              echo "➡️  No change"
+            fi
+          fi
+
+          echo "======================================"
