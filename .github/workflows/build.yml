@@ -48,7 +48,7 @@ jobs:
         timeout-minutes: 120
         env:
           MAVEN_OPTS: -Xmx6g -Xms2g -XX:MaxMetaspaceSize=1g
-        run: mvn org.pitest:pitest-maven:mutationCoverage -pl core,navigation,client-hc,example,reader-gtfs
+        run: mvn org.pitest:pitest-maven:mutationCoverage -pl core,navigation,client-hc,example,reader-gtfs,web-bundle
 
       - name: Extract Current Mutation Scores
         id: current_scores
@@ -77,12 +77,14 @@ jobs:
           CLIENT_HC_SCORE=$(extract_score "client-hc")
           EXAMPLE_SCORE=$(extract_score "example")
           READER_SCORE=$(extract_score "reader-gtfs")
+          WEB_BUNDLE_SCORE=$(extract_score "web-bundle")
 
           echo "core=$CORE_SCORE" >> $GITHUB_OUTPUT
           echo "navigation=$NAVIGATION_SCORE" >> $GITHUB_OUTPUT
           echo "clienthc=$CLIENT_HC_SCORE" >> $GITHUB_OUTPUT
           echo "example=$EXAMPLE_SCORE" >> $GITHUB_OUTPUT
           echo "readergtfs=$READER_SCORE" >> $GITHUB_OUTPUT
+          echo "webbundle=$WEB_BUNDLE_SCORE" >> $GITHUB_OUTPUT
 
           echo "📊 Current Scores:"
           echo "  - Core: $CORE_SCORE%"
@@ -90,6 +92,7 @@ jobs:
           echo "  - Client-HC: $CLIENT_HC_SCORE%"
           echo "  - example: $EXAMPLE_SCORE%"
           echo "  - reader-gtfs: $READER_SCORE%"
+          echo "  - web-bundle: $WEB_BUNDLE_SCORE%"
 
       - name: Checkout Previous Commit
         if: github.event.before != '0000000000000000000000000000000000000000'
@@ -138,6 +141,7 @@ jobs:
           CLIENT_HC_SCORE=$(extract_score "client-hc")
           EXAMPLE_SCORE=$(extract_score "example")
           READER_SCORE=$(extract_score "reader-gtfs")
+          WEB_BUNDLE_SCORE=$(extract_score "web-bundle")
 
 
           echo "core=$CORE_SCORE" >> $GITHUB_OUTPUT
@@ -145,6 +149,7 @@ jobs:
           echo "clienthc=$CLIENT_HC_SCORE" >> $GITHUB_OUTPUT
           echo "example=$EXAMPLE_SCORE" >> $GITHUB_OUTPUT
           echo "readergtfs=$READER_SCORE" >> $GITHUB_OUTPUT
+          echo "webbundle=$WEB_BUNDLE_SCORE" >> $GITHUB_OUTPUT
 
           echo "📊 Previous Scores:"
           echo "  - Core: $CORE_SCORE%"
@@ -152,6 +157,7 @@ jobs:
           echo "  - Client-HC: $CLIENT_HC_SCORE%"
           echo "  - example: $EXAMPLE_SCORE%"
           echo "  - reader-gtfs: $READER_SCORE%"
+          echo "  - web-bundle: $WEB_BUNDLE_SCORE%"
 
       - name: Compare Scores and Fail on Regression
         if: always()
@@ -174,6 +180,8 @@ jobs:
           EXAMPLE_PREVIOUS="${{ steps.previous_scores.outputs.example }}"
           READER_CURRENT="${{ steps.current_scores.outputs.readergtfs }}"
           READER_PREVIOUS="${{ steps.previous_scores.outputs.readergtfs }}"
+          WEB_BUNDLE_CURRENT="${{ steps.current_scores.outputs.webbundle }}"
+          WEB_BUNDLE_PREVIOUS="${{ steps.previous_scores.outputs.webbundle }}"
 
           FAILED=0
 
@@ -225,6 +233,7 @@ jobs:
           compare_module "CLIENT-HC" "$CLIENT_HC_CURRENT" "$CLIENT_HC_PREVIOUS" || FAILED=1
           compare_module "EXAMPLE" "$EXAMPLE_CURRENT" "$EXAMPLE_PREVIOUS" || FAILED=1
           compare_module "READER" "$READER_CURRENT" "$READER_PREVIOUS" || FAILED=1
+          compare_module "WEB-BUNDLE" "$WEB_BUNDLE_CURRENT" "$WEB_BUNDLE_PREVIOUS" || FAILED=1
 
 
           echo "======================================"
