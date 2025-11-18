@@ -48,7 +48,7 @@ jobs:
         timeout-minutes: 120
         env:
           MAVEN_OPTS: -Xmx6g -Xms2g -XX:MaxMetaspaceSize=1g
-        run: mvn org.pitest:pitest-maven:mutationCoverage -pl core,navigation,client-hc,example,reader-gtfs,web-bundle
+        run: mvn org.pitest:pitest-maven:mutationCoverage -pl core,navigation,client-hc,example,reader-gtfs,web-bundle,web-api,web
 
       - name: Extract Current Mutation Scores
         id: current_scores
@@ -78,6 +78,8 @@ jobs:
           EXAMPLE_SCORE=$(extract_score "example")
           READER_SCORE=$(extract_score "reader-gtfs")
           WEB_BUNDLE_SCORE=$(extract_score "web-bundle")
+          WEB_API_SCORE=$(extract_score "web-api")
+          WEB_SCORE=$(extract_score "web")
 
           echo "core=$CORE_SCORE" >> $GITHUB_OUTPUT
           echo "navigation=$NAVIGATION_SCORE" >> $GITHUB_OUTPUT
@@ -85,6 +87,8 @@ jobs:
           echo "example=$EXAMPLE_SCORE" >> $GITHUB_OUTPUT
           echo "readergtfs=$READER_SCORE" >> $GITHUB_OUTPUT
           echo "webbundle=$WEB_BUNDLE_SCORE" >> $GITHUB_OUTPUT
+          echo "webapi=$WEB_API_SCORE" >> $GITHUB_OUTPUT
+          echo "web=$WEB_SCORE" >> $GITHUB_OUTPUT
 
           echo "📊 Current Scores:"
           echo "  - Core: $CORE_SCORE%"
@@ -93,6 +97,8 @@ jobs:
           echo "  - example: $EXAMPLE_SCORE%"
           echo "  - reader-gtfs: $READER_SCORE%"
           echo "  - web-bundle: $WEB_BUNDLE_SCORE%"
+          echo "  - web-api: $WEB_API_SCORE%"
+          echo "  - web: $WEB_SCORE%"
 
       - name: Checkout Previous Commit
         if: github.event.before != '0000000000000000000000000000000000000000'
@@ -111,7 +117,7 @@ jobs:
         timeout-minutes: 120
         env:
           MAVEN_OPTS: -Xmx6g -Xms2g -XX:MaxMetaspaceSize=1g
-        run: mvn org.pitest:pitest-maven:mutationCoverage -pl core,navigation,client-hc,example,reader-gtfs
+        run: mvn org.pitest:pitest-maven:mutationCoverage -pl core,navigation,client-hc,example,reader-gtfs,web-bundle,web-api,web
 
       - name: Extract Previous Mutation Scores
         if: github.event.before != '0000000000000000000000000000000000000000'
@@ -142,6 +148,8 @@ jobs:
           EXAMPLE_SCORE=$(extract_score "example")
           READER_SCORE=$(extract_score "reader-gtfs")
           WEB_BUNDLE_SCORE=$(extract_score "web-bundle")
+          WEB_API_SCORE=$(extract_score "web-api")
+          WEB_SCORE=$(extract_score "web")
 
 
           echo "core=$CORE_SCORE" >> $GITHUB_OUTPUT
@@ -150,6 +158,9 @@ jobs:
           echo "example=$EXAMPLE_SCORE" >> $GITHUB_OUTPUT
           echo "readergtfs=$READER_SCORE" >> $GITHUB_OUTPUT
           echo "webbundle=$WEB_BUNDLE_SCORE" >> $GITHUB_OUTPUT
+          echo "webapi=$WEB_API_SCORE" >> $GITHUB_OUTPUT
+          echo "web=$WEB_SCORE" >> $GITHUB_OUTPUT
+
 
           echo "📊 Previous Scores:"
           echo "  - Core: $CORE_SCORE%"
@@ -158,6 +169,8 @@ jobs:
           echo "  - example: $EXAMPLE_SCORE%"
           echo "  - reader-gtfs: $READER_SCORE%"
           echo "  - web-bundle: $WEB_BUNDLE_SCORE%"
+          echo "  - web-api: $WEB_API_SCORE%"
+          echo "  - web: $WEB_SCORE%"
 
       - name: Compare Scores and Fail on Regression
         if: always()
@@ -182,6 +195,10 @@ jobs:
           READER_PREVIOUS="${{ steps.previous_scores.outputs.readergtfs }}"
           WEB_BUNDLE_CURRENT="${{ steps.current_scores.outputs.webbundle }}"
           WEB_BUNDLE_PREVIOUS="${{ steps.previous_scores.outputs.webbundle }}"
+          WEB_API_CURRENT="${{ steps.current_scores.outputs.webapi }}"
+          WEB_API_PREVIOUS="${{ steps.previous_scores.outputs.webapi }}"
+          WEB_CURRENT="${{ steps.current_scores.outputs.web }}"
+          WEB_PREVIOUS="${{ steps.previous_scores.outputs.web }}"
 
           FAILED=0
 
@@ -234,6 +251,8 @@ jobs:
           compare_module "EXAMPLE" "$EXAMPLE_CURRENT" "$EXAMPLE_PREVIOUS" || FAILED=1
           compare_module "READER" "$READER_CURRENT" "$READER_PREVIOUS" || FAILED=1
           compare_module "WEB-BUNDLE" "$WEB_BUNDLE_CURRENT" "$WEB_BUNDLE_PREVIOUS" || FAILED=1
+          compare_module "WEB-API" "$WEB_API_CURRENT" "$WEB_API_PREVIOUS" || FAILED=1
+          compare_module "WEB" "$WEB_CURRENT" "$WEB_PREVIOUS" || FAILED=1
 
 
           echo "======================================"
