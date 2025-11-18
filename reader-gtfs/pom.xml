@@ -82,7 +82,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <!-- Currently we need a bit more memory than for other tests -->
                 <configuration>
-                    <argLine>@{argLine} -Xmx1200m -Xms1200m -Duser.language=en</argLine>
+                    <argLine>-Xmx1200m -Xms1200m -Duser.language=en</argLine>
                 </configuration>
             </plugin>
             <plugin>
