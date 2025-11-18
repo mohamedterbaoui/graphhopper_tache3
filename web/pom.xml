@@ -109,7 +109,9 @@
                     <targetTests> 
                         <param>com.graphhopper.application.*</param>
                     </targetTests>
-                    <maxMutationsPerClass>10</maxMutationsPerClass>
+                    <features>
+                        <feature>+CLASSLIMIT(limit[10])</feature>
+                    </features>
                     <jvmArgs>
                         <value>-Xmx4g</value>
                         <value>-Xms2g</value>
