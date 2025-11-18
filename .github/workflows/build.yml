@@ -60,7 +60,7 @@ jobs:
             local REPORT_DIR=$(find $module/target/pit-reports -type d -mindepth 1 -maxdepth 1 2>/dev/null | head -1)
             
             if [ -n "$REPORT_DIR" ] && [ -f "$REPORT_DIR/index.html" ]; then
-              local SCORE=$(grep -A 20 "Project Summary" "$REPORT_DIR/index.html" | grep -oP '\d+(?=% <div class="coverage_bar")' | sed -n '2p')
+              local SCORE=$(grep -A 20 "Project Summary" "$REPORT_DIR/index.html" | grep -oP '[0-9]+(?=% <div class="coverage_bar")' | sed -n '2p')
               if [ -n "$SCORE" ]; then
                 echo "$SCORE"
               else
@@ -118,7 +118,7 @@ jobs:
             local REPORT_DIR=$(find $module/target/pit-reports -type d -mindepth 1 -maxdepth 1 2>/dev/null | head -1)
             
             if [ -n "$REPORT_DIR" ] && [ -f "$REPORT_DIR/index.html" ]; then
-              local SCORE=$(grep -A 20 "Project Summary" "$REPORT_DIR/index.html" | grep -oP '\d+(?=% <div class="coverage_bar")' | sed -n '2p')
+              local SCORE=$(grep -A 20 "Project Summary" "$REPORT_DIR/index.html" | grep -oP '[0-9]+(?=% <div class="coverage_bar")' | sed -n '2p')
               if [ -n "$SCORE" ]; then
                 echo "$SCORE"
               else
