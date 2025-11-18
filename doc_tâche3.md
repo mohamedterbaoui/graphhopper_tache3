@@ -218,7 +218,8 @@ public static boolean isEven(int number) {
 
 <!-- Insérer capture d'écran ici -->
 
-![Build Success](path/to/success-screenshot.png)
+![Build Success](screenshots/1.png)
+![Build Success](screenshots/2.png)
 
 _Score de mutation stable ou amélioré → ✅ Build passes_
 
@@ -228,7 +229,8 @@ _Score de mutation stable ou amélioré → ✅ Build passes_
 
 <!-- Insérer capture d'écran ici -->
 
-![Build Failed](path/to/failure-screenshot.png)
+![Build Failed](screenshots/3.png)
+![Build Failed](screenshots/4.png)
 
 _Baisse du mutation score après décommenter les méthodes → ❌ Build fails_
 
@@ -245,6 +247,8 @@ En cas d'échec du build, une étape "Suggested Solution" s'affiche :
       echo "To learn more about the errors and how to fix them"
       echo "Visit the site https://tinyurl.com/43cts52a"
 ```
+
+![Suggestion message](screenshots/5.png)
 
 **Message affiché :**
 
