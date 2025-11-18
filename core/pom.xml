@@ -193,11 +193,11 @@
                 <configuration>
                     <targetClasses> 
                         <param>com.graphhopper.util.GHUtility</param> 
-                        <!-- <param>com.graphhopper.util.ArrayUtil</param>  -->
+                        <param>com.graphhopper.util.ArrayUtil</param> 
                     </targetClasses> 
                     <targetTests> 
                         <param>com.graphhopper.util.GHUtilityTest</param> 
-                        <!-- <param>com.graphhopper.util.ArrayUtilTest</param>  -->
+                        <param>com.graphhopper.util.ArrayUtilTest</param> 
                     </targetTests>
                     <jvmArgs>
                         <value>-Xmx4g</value>

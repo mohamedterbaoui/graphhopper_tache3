@@ -39,10 +39,10 @@
                 <artifactId>pitest-maven</artifactId>
                 <configuration>
                     <targetClasses> 
-                        <param>com.graphhopper.navigation.DistanceConfig</param>
+                        <param>com.graphhopper.navigation.*</param>
                     </targetClasses> 
                     <targetTests> 
-                        <param>com.graphhopper.navigation.DistanceConfigTest</param>
+                        <param>com.graphhopper.navigation.*</param>
                     </targetTests>
                     <jvmArgs>
                         <value>-Xmx4g</value>

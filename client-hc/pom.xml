@@ -80,10 +80,10 @@
                 <artifactId>pitest-maven</artifactId>
                 <configuration>
                     <targetClasses> 
-                        <param>com.graphhopper.api.GraphHopperWeb</param>
+                        <param>com.graphhopper.api.*</param>
                     </targetClasses> 
                     <targetTests> 
-                        <param>com.graphhopper.api.GraphHopperWebTest</param>
+                        <param>com.graphhopper.api.*</param>
                     </targetTests>
                     <jvmArgs>
                         <value>-Xmx4g</value>
