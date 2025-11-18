@@ -48,7 +48,7 @@ jobs:
         timeout-minutes: 120
         env:
           MAVEN_OPTS: -Xmx6g -Xms2g -XX:MaxMetaspaceSize=1g
-        run: mvn org.pitest:pitest-maven:mutationCoverage -pl core,navigation,client-hc,example
+        run: mvn org.pitest:pitest-maven:mutationCoverage -pl core,navigation,client-hc,example,reader-gtfs
 
       - name: Extract Current Mutation Scores
         id: current_scores
@@ -76,17 +76,20 @@ jobs:
           NAVIGATION_SCORE=$(extract_score "navigation")
           CLIENT_HC_SCORE=$(extract_score "client-hc")
           EXAMPLE_SCORE=$(extract_score "example")
+          READER_SCORE=$(extract_score "reader-gtfs")
 
           echo "core=$CORE_SCORE" >> $GITHUB_OUTPUT
           echo "navigation=$NAVIGATION_SCORE" >> $GITHUB_OUTPUT
           echo "clienthc=$CLIENT_HC_SCORE" >> $GITHUB_OUTPUT
           echo "example=$EXAMPLE_SCORE" >> $GITHUB_OUTPUT
+          echo "readergtfs=$READER_SCORE" >> $GITHUB_OUTPUT
 
           echo "📊 Current Scores:"
           echo "  - Core: $CORE_SCORE%"
           echo "  - Navigation: $NAVIGATION_SCORE%"
           echo "  - Client-HC: $CLIENT_HC_SCORE%"
           echo "  - example: $EXAMPLE_SCORE%"
+          echo "  - reader-gtfs: $READER_SCORE%"
 
       - name: Checkout Previous Commit
         if: github.event.before != '0000000000000000000000000000000000000000'
@@ -105,7 +108,7 @@ jobs:
         timeout-minutes: 120
         env:
           MAVEN_OPTS: -Xmx6g -Xms2g -XX:MaxMetaspaceSize=1g
-        run: mvn org.pitest:pitest-maven:mutationCoverage -pl core,navigation,client-hc,example
+        run: mvn org.pitest:pitest-maven:mutationCoverage -pl core,navigation,client-hc,example,reader-gtfs
 
       - name: Extract Previous Mutation Scores
         if: github.event.before != '0000000000000000000000000000000000000000'
@@ -134,18 +137,21 @@ jobs:
           NAVIGATION_SCORE=$(extract_score "navigation")
           CLIENT_HC_SCORE=$(extract_score "client-hc")
           EXAMPLE_SCORE=$(extract_score "example")
+          READER_SCORE=$(extract_score "reader-gtfs")
 
 
           echo "core=$CORE_SCORE" >> $GITHUB_OUTPUT
           echo "navigation=$NAVIGATION_SCORE" >> $GITHUB_OUTPUT
           echo "clienthc=$CLIENT_HC_SCORE" >> $GITHUB_OUTPUT
           echo "example=$EXAMPLE_SCORE" >> $GITHUB_OUTPUT
+          echo "readergtfs=$READER_SCORE" >> $GITHUB_OUTPUT
 
           echo "📊 Previous Scores:"
           echo "  - Core: $CORE_SCORE%"
           echo "  - Navigation: $NAVIGATION_SCORE%"
           echo "  - Client-HC: $CLIENT_HC_SCORE%"
           echo "  - example: $EXAMPLE_SCORE%"
+          echo "  - reader-gtfs: $READER_SCORE%"
 
       - name: Compare Scores and Fail on Regression
         if: always()
@@ -166,6 +172,8 @@ jobs:
           CLIENT_HC_PREVIOUS="${{ steps.previous_scores.outputs.clienthc }}"
           EXAMPLE_CURRENT="${{ steps.current_scores.outputs.example }}"
           EXAMPLE_PREVIOUS="${{ steps.previous_scores.outputs.example }}"
+          READER_CURRENT="${{ steps.current_scores.outputs.readergtfs }}"
+          READER_PREVIOUS="${{ steps.previous_scores.outputs.readergtfs }}"
 
           FAILED=0
 
@@ -216,6 +224,8 @@ jobs:
           compare_module "NAVIGATION" "$NAVIGATION_CURRENT" "$NAVIGATION_PREVIOUS" || FAILED=1
           compare_module "CLIENT-HC" "$CLIENT_HC_CURRENT" "$CLIENT_HC_PREVIOUS" || FAILED=1
           compare_module "EXAMPLE" "$EXAMPLE_CURRENT" "$EXAMPLE_PREVIOUS" || FAILED=1
+          compare_module "READER" "$READER_CURRENT" "$READER_PREVIOUS" || FAILED=1
+
 
           echo "======================================"
 
